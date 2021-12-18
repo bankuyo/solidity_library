@@ -6,10 +6,11 @@ contract Library {
     struct Book {
         string title;
         string id;
-        string lendingPeriod;
+        uint lendingPeriod;
         uint price; // yen
         uint stock;
         uint numBorrowed;
+        uint numSaled;
         bool isFullBorrowed;
         // user address => boolean
         mapping(address => bool) borrowerTable;
@@ -20,8 +21,15 @@ contract Library {
         address userAddress;
         uint numBorrow;
         uint[] borrowedBooks;
+        uint[] purchasedBooks;
         // book id : boolean
         mapping(uint => bool) borrowTable;
+    }
+
+    struct BorrowedBook {
+        uint bookIndex;
+        address borrowerAddress;
+        uint returnDate;
     }
 
     address public manager;
@@ -33,6 +41,10 @@ contract Library {
 
     uint public numBooks;
     mapping( uint => Book ) public books;
+
+    // period(returnDate) => BrrowedBook[]
+    uint public numBorrowedBooks;
+    mapping( uint => BorrowedBook) BorrowedBooks;
 
     modifier restricted() {
         require(msg.sender == manager);
@@ -83,10 +95,24 @@ contract Library {
         user.borrowedBooks.push(index);
         user.borrowTable[index] = true;
         user.numBorrow++;
+
+        BorrowedBook storage borrowedBook = BorrowedBooks[numBorrowedBooks++];
+        borrowedBook.bookIndex = index;
+        borrowedBook.borrowerAddress = user.userAddress;
+        // Make helper function after!!!!!!!!
+        borrowedBook.returnDate = block.timestamp + book.lendingPeriod days;
     }
 
     // Reserve Book => Implement Later!!!
     // Buy Book => Implement Later!!!
+    function buyBook(uint index) public payable{
+        Book storage book = books[index];
+        require(book.price == msg.value);
+        book.numSaled++;
+
+        User storage user = users[msg.sender];
+        user.purchasedBooks.push(index);
+    }
 
     // Return Book
     function returnBook(uint index) public {
@@ -109,6 +135,14 @@ contract Library {
         user.numBorrow--;
     }
 
+    // Retrieve user Information
+    function getUserInformation() public view returns (uint, uint, uint){
+        User storage user = users[msg.sender];
+        return (user.numBorrow, user.borrowedBooks.length, user.purchasedBooks.length);
+    }
+
+    //=====Library Staff & Manager side================================================
+
     // Invite Staff
     function inviteStaff(address staffAddress) public restricted {
         staff[staffAddress] = true;
@@ -118,7 +152,7 @@ contract Library {
     function addBook(
             string memory title,
             string memory id,
-            string memory period,
+            uint period,
             uint price,
             uint stock
         ) public restricted {
@@ -130,6 +164,7 @@ contract Library {
             book.stock = stock;
             book.numBorrowed = 0;
             book.isFullBorrowed = false;
+            book.numSaled = 0;
     }
 
     // Modify Book
@@ -137,7 +172,7 @@ contract Library {
         uint index,
         string memory title,
         string memory id,
-        string memory period,
+        uint period,
         uint price,
         uint stock
     ) public staffControled{
