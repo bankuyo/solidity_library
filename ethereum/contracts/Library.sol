@@ -11,6 +11,7 @@ contract Library {
     BookManager private bookManager;
     UserManager private userManager;
     TokenManager private tokenManager;
+    address[] managerAddress;
 
     uint public maxBorrowing;
 
@@ -34,6 +35,9 @@ contract Library {
         bookManager = new BookManager(owner);
         userManager = new UserManager(owner);
         tokenManager = new TokenManager(owner);
+        managerAddress.push(address(bookManager));
+        managerAddress.push(address(userManager));
+        managerAddress.push(address(tokenManager));
         maxBorrowing = _maxBorrowing;
     }
 
@@ -76,5 +80,10 @@ contract Library {
     function returnBook(uint _tokenId) public userRestricted {
         tokenManager.returnBook(_tokenId);
         userManager.returned(msg.sender, _tokenId);
+    }
+
+    // Retreive Manager address
+    function getManagerAddress() external restricted view returns(address[] memory){
+        return managerAddress;
     }
 }
