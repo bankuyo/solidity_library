@@ -76,7 +76,8 @@ contract Library {
     // Borrow book
     function borrowBook(uint _tokenId) public userRestricted payable {
         uint cost = tokenManager.getTokenCost(_tokenId);
-        uint bookIndex = tokenManager.getTokenBookId(_tokenId);
+        uint numBorrowing = userManager.getNumBorrowing(msg.sender);
+        require(numBorrowing < maxBorrowing);
         require(cost == msg.value);
         tokenManager.changeReader(_tokenId, msg.sender);
         userManager.borrowed(msg.sender, _tokenId);
