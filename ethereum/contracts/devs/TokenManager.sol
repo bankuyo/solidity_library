@@ -30,7 +30,7 @@ contract TokenManager is TokenManagerInterface {
     address public contractAddress;
 
     uint public numBookToken;
-    mapping(uint => BookToken) bookTokens;
+    mapping(uint => BookToken) public bookTokens;
 
     modifier restricted(){
         require(contractAddress == msg.sender);

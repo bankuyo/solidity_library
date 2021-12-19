@@ -6,7 +6,7 @@ import './devs/TokenManager.sol';
 
 contract Library {
     address public owner;
-    mapping(address => bool) staff;
+    mapping(address => bool) public staff;
 
     BookManager private bookManager;
     UserManager private userManager;
@@ -32,6 +32,7 @@ contract Library {
 
     constructor (uint _maxBorrowing) {
         owner = msg.sender;
+        staff[owner] = true;
         bookManager = new BookManager(owner);
         userManager = new UserManager(owner);
         tokenManager = new TokenManager(owner);
@@ -46,6 +47,11 @@ contract Library {
         staff[_staffAddress] = true;
     }
 
+    // Register user
+    function register() public {
+        userManager.register(msg.sender);
+    }
+
     // Add Book
     function addBook(string memory _bookid, string memory _title, uint _price, address _authorAddress) public restricted {
         bookManager.addBook(_bookid, _title, _price, _authorAddress);
@@ -58,12 +64,13 @@ contract Library {
             bookManager.modifyBook(_index, _bookid, _title, _price, _authorAddress);
     }
 
-    // Create book token
+    // Create book token 
     function createBookToken(uint _bookIndex, uint _period, uint _cost) public userRestricted payable {
         uint price = bookManager.getBookPrice(_bookIndex);
         require(price == msg.value);
         uint tokenId = tokenManager.createBookToken(msg.sender, _bookIndex, _period, _cost);
         userManager.purchased(msg.sender, tokenId);
+        bookManager.tokenCreated(_bookIndex);   
     }
 
     // Borrow book
@@ -73,7 +80,6 @@ contract Library {
         require(cost == msg.value);
         tokenManager.changeReader(_tokenId, msg.sender);
         userManager.borrowed(msg.sender, _tokenId);
-        bookManager.tokenCreated(bookIndex);   
     }
 
     // Return book
