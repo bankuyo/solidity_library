@@ -9,10 +9,8 @@ interface UserManagerInterface {
         uint numBorrowing;
 
         uint numBorrowed;
-        uint[] borrowingBooksId;
-        // book id => index
-        mapping(uint => uint) searchBorrowingBookIndex;
-        mapping(uint => bool) isBorrowedTable;
+        // borrowed index => token id
+        mapping(uint => uint) isBorrowedTable;
 
         uint numPurchased;
         uint[] purchasedBooksId;
@@ -35,6 +33,8 @@ contract UserManager is UserManagerInterface{
     uint public numUser;
     mapping(address => User) public users;
     mapping(address => bool) public isValidUser;
+    // user address => tokenId => true / false
+    mapping(address => mapping(uint => bool)) public isBorrowingTable;
 
     uint public numStaff;
     mapping(address => bool) isStaff;
@@ -69,9 +69,7 @@ contract UserManager is UserManagerInterface{
         require(isValidUser[_sender]);
 
         User storage user = users[_sender];
-        user.borrowingBooksId.push(_tokenId);
-        user.searchBorrowingBookIndex[_tokenId] = user.numBorrowed;
-        user.isBorrowedTable[_tokenId] = true;
+        isBorrowingTable[_sender][_tokenId] = true;
         user.numBorrowing++;
         user.numBorrowed++;
     }
@@ -79,7 +77,7 @@ contract UserManager is UserManagerInterface{
     function returned(address _sender, uint _tokenId) public restricted{
         require(isValidUser[_sender]);
         User storage user = users[_sender];
-        user.isBorrowedTable[_tokenId] = false;
+        isBorrowingTable[_sender][_tokenId] = false;
         user.numBorrowing--;
     }
 
@@ -99,5 +97,14 @@ contract UserManager is UserManagerInterface{
 
     function getIsStaff(address _staffAddress) external view returns(bool){
         return isStaff[_staffAddress];
+    }
+
+    function getNumBorrowing(address _userAddress) external view returns(uint){
+        User storage user = users[_userAddress];
+        return user.numBorrowing;
+    }
+
+    function getIsBorrowing(address _userAddress, uint _tokenId) external view returns(bool){
+        return isBorrowingTable[_userAddress][_tokenId];
     }
 }
