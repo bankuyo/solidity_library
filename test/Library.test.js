@@ -23,7 +23,7 @@ const INITIAL_PERIOD = 7;
 const INITIAL_COST = 0;
 
 // Helper functions ===================================
-const intialAddBook = async () => {
+const initialAddBook = async () => {
     await library.methods.addBook(INITIAL_BOOKID, INITIAL_TITLE, INITIAL_PRICE, accounts[3])
         .send({
             from: accounts[0],
@@ -34,6 +34,21 @@ const intialAddBook = async () => {
 const initialRegister = async (account) => {
     await library.methods.register().send({
         from: account,
+        gas: '1000000'
+    })
+}
+const initialCreatingBookToken = async(account) => {
+    await library.methods.createBookToken(0,INITIAL_PERIOD,INITIAL_COST).send({
+        value: INITIAL_PRICE,
+        from: account,
+        gas:'1000000'
+    })
+}
+
+const initialBorrowing = async (account) => {
+    await library.methods.borrowBook(0).send({
+        from: account,
+        value: INITIAL_COST,
         gas: '1000000'
     })
 }
@@ -118,7 +133,7 @@ describe('Library', () => {
     })
 
     it('allow to modify book inforamtion', async () => {
-        await intialAddBook();
+        await initialAddBook();
         await library.methods.inviteStaff(accounts[1]).send({ from: accounts[0], gas: '1000000'});
         await library.methods.modifyBook(0, INITIAL_BOOKID, 'HELLO',INITIAL_PRICE, accounts[3]).send({
             from: accounts[1],
@@ -129,7 +144,7 @@ describe('Library', () => {
     })
 
     it('allow user to create a new Book Token', async () => {
-        await intialAddBook();
+        await initialAddBook();
         await initialRegister(accounts[1]);
         await library.methods.createBookToken(0,INITIAL_PERIOD,INITIAL_COST).send({
             value: INITIAL_PRICE,
@@ -150,7 +165,55 @@ describe('Library', () => {
         const { numToken } = await bookManager.methods.bookInformations(0).call();
         assert.equal(numToken, 1)
     })
-} )
+
+    it('appropreatly process a borrow contract', async () => {
+        await initialAddBook();
+        await initialRegister(accounts[1]);
+        await initialRegister(accounts[2]);
+        await initialCreatingBookToken(accounts[1]);
+        
+        await library.methods.borrowBook(0).send({
+            from: accounts[2],
+            value: INITIAL_COST,
+            gas: '1000000'
+        })
+
+        const token = await tokenManager.methods.bookTokens(0).call();
+        assert.equal(token.reader, accounts[2])
+        
+        const user = await userManager.methods.users(accounts[2]).call();
+        assert.equal(user.numBorrowing, 1);
+        assert.equal(user.numBorrowed, 1);
+        
+        const isBorrowing = await userManager.methods.getIsBorrowing(accounts[2],0).call();
+        assert(isBorrowing);
+    });
+
+    it('appropreatly process a return contract', async () => {
+        await initialAddBook();
+        await initialRegister(accounts[1]);
+        await initialRegister(accounts[2]);
+        await initialCreatingBookToken(accounts[1]);
+        await initialBorrowing(accounts[2]);
+
+        await library.methods.returnBook(0).send({
+            from: accounts[2],
+            gas: '1000000'
+        })
+
+        const token = await tokenManager.methods.bookTokens(0).call();
+        assert.equal(token.reader, accounts[1]);
+
+        const user = await userManager.methods.users(accounts[2]).call();
+        assert.equal(user.numBorrowed, 1);
+        assert.equal(user.numBorrowing, 0);
+
+        const isBorrowing = await userManager.methods.getIsBorrowing(accounts[2],0).call();
+        assert(!isBorrowing);
+        
+    })
+
+})
 
 describe('BookManager', () => {
     it('successfuly created by Library constructor', async () => {
