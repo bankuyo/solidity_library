@@ -1,157 +1,80 @@
 // SPDX-License-Identifier: MIT
-
-pragma solidity ^0.8.10;
+pragma solidity 0.8.10;
+import './devs/BookManager.sol';
+import './devs/UserManager.sol';
+import './devs/TokenManager.sol';
 
 contract Library {
-    struct Book {
-        string title;
-        string id;
-        string lendingPeriod;
-        uint price; // yen
-        uint stock;
-        uint numBorrowed;
-        bool isFullBorrowed;
-        // user address => boolean
-        mapping(address => bool) borrowerTable;
-        address[] borrower;
-    }
+    address public owner;
+    mapping(address => bool) staff;
 
-    struct User {
-        address userAddress;
-        uint numBorrow;
-        uint[] borrowedBooks;
-        // book id : boolean
-        mapping(uint => bool) borrowTable;
-    }
+    BookManager private bookManager;
+    UserManager private userManager;
+    TokenManager private tokenManager;
 
-    address public manager;
-    uint public countUser;
     uint public maxBorrowing;
-    mapping(address => User) public users;
-    mapping(address => bool) public validUser;
-    mapping(address => bool) private staff;
-
-    uint public numBooks;
-    mapping( uint => Book ) public books;
 
     modifier restricted() {
-        require(msg.sender == manager);
+        require(owner == msg.sender);
         _;
     }
 
-    modifier staffControled() {
-        require(staff[msg.sender]);
+    modifier userRestricted(){
+        require(userManager.getIsValidUser(msg.sender));
         _;
     }
 
-    constructor(uint maxBorrowingNumber) {
-        manager = msg.sender;
-        maxBorrowing = maxBorrowingNumber;
-        staff[msg.sender] = true;
+    modifier staffRestricted(){
+        require(userManager.getIsStaff(msg.sender));
+        _;
     }
 
-    // Register a user
-    function register () public {
-        require(!validUser[msg.sender]);
-        validUser[msg.sender] = true;
-        User storage user = users[msg.sender];
-        user.userAddress = msg.sender;
-        user.numBorrow = 0;
-        countUser++;
+    constructor (uint _maxBorrowing) {
+        owner = msg.sender;
+        bookManager = new BookManager(owner);
+        userManager = new UserManager(owner);
+        tokenManager = new TokenManager(owner);
+        maxBorrowing = _maxBorrowing;
     }
 
-    // Borrow Book
-    function borrowBook(uint index) public {
-        require(validUser[msg.sender]);
-
-        // Book section
-        Book storage book = books[index];
-        require(book.numBorrowed < book.stock);
-        require(!book.isFullBorrowed);
-        require(!book.borrowerTable[msg.sender]);
-
-        book.numBorrowed++;
-        if(book.numBorrowed == book.stock){
-            book.isFullBorrowed = true;
-        }
-        book.borrower.push(msg.sender);
-        book.borrowerTable[msg.sender] = true;
-
-        // User section
-        User storage user = users[msg.sender];
-        require(user.numBorrow < maxBorrowing);
-        user.borrowedBooks.push(index);
-        user.borrowTable[index] = true;
-        user.numBorrow++;
+    // Invite staff
+    function inviteStaff(address _staffAddress) public restricted{
+        staff[_staffAddress] = true;
     }
 
-    // Reserve Book => Implement Later!!!
-    // Buy Book => Implement Later!!!
-
-    // Return Book
-    function returnBook(uint index) public {
-        require(index < numBooks);
-        require(validUser[msg.sender]);
-
-        Book storage book = books[index];
-        User storage user = users[msg.sender];
-
-        require(book.borrowerTable[msg.sender]);
-        require(user.borrowTable[index]);
-
-        // Book section
-        book.borrowerTable[msg.sender] = false;
-        book.numBorrowed--;
-        book.isFullBorrowed = false;
-        
-        // User section
-        user.borrowTable[index] = false;
-        user.numBorrow--;
-    }
-
-    // Invite Staff
-    function inviteStaff(address staffAddress) public restricted {
-        staff[staffAddress] = true;
-    }
-
-    // Add new Book
-    function addBook(
-            string memory title,
-            string memory id,
-            string memory period,
-            uint price,
-            uint stock
-        ) public restricted {
-            Book storage book = books[numBooks++];
-            book.title = title;
-            book.id=id;
-            book.lendingPeriod = period;
-            book.price = price;
-            book.stock = stock;
-            book.numBorrowed = 0;
-            book.isFullBorrowed = false;
+    // Add Book
+    function addBook(string memory _bookid, string memory _title, uint _price, address _authorAddress) public restricted {
+        bookManager.addBook(_bookid, _title, _price, _authorAddress);
     }
 
     // Modify Book
-    function modifyInformation(
-        uint index,
-        string memory title,
-        string memory id,
-        string memory period,
-        uint price,
-        uint stock
-    ) public staffControled{
-        require(index < numBooks);
-        Book storage book = books[index];
-        require(book.stock >= stock);
+    function modifyBook( uint _index, string memory _bookid, string memory _title, uint _price, address _authorAddress)
+        public {
+            require(staff[msg.sender]);
+            bookManager.modifyBook(_index, _bookid, _title, _price, _authorAddress);
+    }
 
-        book.title = title;
-        book.id=id;
-        book.lendingPeriod = period;
-        book.price = price;
-        book.stock = stock;
-        if(book.stock == book.numBorrowed){
-            book.isFullBorrowed = true;
-        }
+    // Create book token
+    function createBookToken(uint _bookIndex, uint _period, uint _cost) public userRestricted payable {
+        uint price = bookManager.getBookPrice(_bookIndex);
+        require(price == msg.value);
+        uint tokenId = tokenManager.createBookToken(msg.sender, _bookIndex, _period, _cost);
+        userManager.purchased(msg.sender, tokenId);
+    }
+
+    // Borrow book
+    function borrowBook(uint _tokenId) public userRestricted payable {
+        uint cost = tokenManager.getTokenCost(_tokenId);
+        uint bookIndex = tokenManager.getTokenBookId(_tokenId);
+        require(cost == msg.value);
+        tokenManager.changeReader(_tokenId, msg.sender);
+        userManager.borrowed(msg.sender, _tokenId);
+        bookManager.tokenCreated(bookIndex);   
+    }
+
+    // Return book
+    function returnBook(uint _tokenId) public userRestricted {
+        tokenManager.returnBook(_tokenId);
+        userManager.returned(msg.sender, _tokenId);
     }
 }
