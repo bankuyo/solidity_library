@@ -4,12 +4,14 @@ const Web3 = require('web3');
 const web3 = new Web3(ganache.provider());
 
 const compiledLibrary = require('../ethereum/build/Library.json');
+const compiledLibraryFactory = require('../ethereum/build/LibraryFactory.json');
 const compiledBookManager = require('../ethereum/build/BookManager.json');
 const compiledUserManager = require('../ethereum/build/UserManager.json');
 const compiledTokenManager = require('../ethereum/build/TokenManager.json');
 
 let accounts;
 let library;
+let libraryFactory;
 let bookManager;
 let userManager;
 let tokenManager;
@@ -65,15 +67,34 @@ const initialBorrowing = async (account) => {
 beforeEach(async () => {
     accounts = await web3.eth.getAccounts();
 
-    library = await new web3.eth.Contract(compiledLibrary.abi)
+    factory = await new web3.eth.Contract(compiledLibraryFactory.abi)
         .deploy({
-            data: compiledLibrary.evm.bytecode.object,
-            arguments: [MAX_BORROWING]
+            data: compiledLibraryFactory.evm.bytecode.object
         })
         .send({
             from: accounts[0],
             gas: '6000000'
-        });
+        })
+
+    await factory.methods.createLibrary(2).send({
+        from : accounts[0],
+        gas:'6000000'
+    });
+
+    [ libraryAddress ] = await factory.methods.getDeployedLibraries().call(); 
+    library = await new web3.eth.Contract(
+        compiledLibrary.abi,
+        libraryAddress
+    );
+    // library = await new web3.eth.Contract(compiledLibrary.abi)
+    //     .deploy({
+    //         data: compiledLibrary.evm.bytecode.object,
+    //         arguments: [MAX_BORROWING]
+    //     })
+    //     .send({
+    //         from: accounts[0],
+    //         gas: '6000000'
+    //     });
 
     [bookManagerAddress, userManagerAddress, tokenManagerAddress] = await library.methods.getManagerAddress().call();
     bookManager = new web3.eth.Contract(compiledBookManager.abi, bookManagerAddress);

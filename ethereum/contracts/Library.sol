@@ -4,6 +4,19 @@ import './devs/BookManager.sol';
 import './devs/UserManager.sol';
 import './devs/TokenManager.sol';
 
+contract LibraryFactory {
+    address[] public deployedLibraries;
+
+    function createLibrary(uint _maxBorrowing) public {
+        Library newLibrary = new Library(_maxBorrowing, msg.sender);
+        deployedLibraries.push(address(newLibrary));
+    }
+
+    function getDeployedLibraries() public view returns (address[] memory) {
+        return deployedLibraries;
+    }
+}
+
 contract Library {
     address public owner;
     mapping(address => bool) public staff;
@@ -30,8 +43,8 @@ contract Library {
         _;
     }
 
-    constructor (uint _maxBorrowing) {
-        owner = msg.sender;
+    constructor (uint _maxBorrowing, address _creator) {
+        owner = _creator;
         staff[owner] = true;
         bookManager = new BookManager(owner);
         userManager = new UserManager(owner);
