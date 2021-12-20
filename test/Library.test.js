@@ -68,7 +68,7 @@ beforeEach(async () => {
             gas: '6000000'
         });
 
-    [bookManagerAddress, userManagerAddress, tokenManagerAddress ] = await library.methods.getManagerAddress().call();
+    [bookManagerAddress, userManagerAddress, tokenManagerAddress] = await library.methods.getManagerAddress().call();
     bookManager = new web3.eth.Contract(compiledBookManager.abi, bookManagerAddress);
     userManager = new web3.eth.Contract(compiledUserManager.abi, userManagerAddress);
     tokenManager= new web3.eth.Contract(compiledTokenManager.abi, tokenManagerAddress);

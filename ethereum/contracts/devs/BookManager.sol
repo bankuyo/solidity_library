@@ -34,6 +34,9 @@ contract BookManager is BookManagerInterface {
     uint public numBook;
     mapping(uint => BookInformation) public bookInformations;
 
+    // book id => true/false
+    mapping(string => bool) public isStoredBook;
+
     modifier restricted(){
         require(contractAddress == msg.sender);
         _;
@@ -44,15 +47,16 @@ contract BookManager is BookManagerInterface {
         contractAddress = msg.sender;
     }
 
-    function addBook( string memory _bookid, string memory _title, uint _price, address _authorAddress) 
+    function addBook( string memory _bookId, string memory _title, uint _price, address _authorAddress) 
         public restricted {
-
         BookInformation storage book = bookInformations[numBook++];
-        book.bookId = _bookid;
+        book.bookId = _bookId;
         book.title = _title;
         book.price = _price;
         book.numToken = 0;
         book.authorAddress = _authorAddress;
+
+        isStoredBook[_bookId] = true;
     }
 
     function modifyBook( uint _bookIndex, string memory _bookid, string memory _title, uint _price, address _authorAddress)
@@ -82,6 +86,10 @@ contract BookManager is BookManagerInterface {
                 bookInformation.numToken,
                 bookInformation.authorAddress
             );
+    }
+
+    function getIsStoredBook(string memory _bookId) external view returns(bool){
+        return isStoredBook[_bookId];
     }
 
     function tokenCreated(uint _bookIndex) external {

@@ -53,15 +53,16 @@ contract Library {
     }
 
     // Add Book
-    function addBook(string memory _bookid, string memory _title, uint _price, address _authorAddress) public restricted {
-        bookManager.addBook(_bookid, _title, _price, _authorAddress);
+    function addBook(string memory _bookId, string memory _title, uint _price, address _authorAddress) public restricted {
+        require(bookManager.getIsStoredBook(_bookId));
+        bookManager.addBook(_bookId, _title, _price, _authorAddress);
     }
 
     // Modify Book
-    function modifyBook( uint _index, string memory _bookid, string memory _title, uint _price, address _authorAddress)
+    function modifyBook( uint _index, string memory _bookId, string memory _title, uint _price, address _authorAddress)
         public {
             require(staff[msg.sender]);
-            bookManager.modifyBook(_index, _bookid, _title, _price, _authorAddress);
+            bookManager.modifyBook(_index, _bookId, _title, _price, _authorAddress);
     }
 
     // Create book token 
@@ -85,6 +86,8 @@ contract Library {
 
     // Return book
     function returnBook(uint _tokenId) public userRestricted {
+        address reader = tokenManager.getTokenReader(_tokenId);
+        require(reader == msg.sender);
         tokenManager.returnBook(_tokenId);
         userManager.returned(msg.sender, _tokenId);
     }
