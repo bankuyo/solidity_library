@@ -96,6 +96,11 @@ contract TokenManager is TokenManagerInterface {
         return bookToken.reader;
     }
 
+    function getTokenIsAllowed(uint _tokenId) external view returns(bool){
+        BookToken memory bookToken = bookTokens[_tokenId];
+        return bookToken.allowToContract;
+    }
+
     function getTokenBookId(uint _tokenId) external view returns(uint){
         BookToken memory bookToken = bookTokens[_tokenId];
         return bookToken.bookIndex;

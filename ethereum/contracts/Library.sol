@@ -74,10 +74,17 @@ contract Library {
         bookManager.tokenCreated(_bookIndex);   
     }
 
+    // Change the status to make automaticly contract token
+    function allowTokenToContract(uint _tokenId, bool _status) public userRestricted payable {
+        tokenManager.changeAllowabilityStatus(_tokenId, _status);
+    }
+
     // Borrow book
     function borrowBook(uint _tokenId) public userRestricted payable {
         uint cost = tokenManager.getTokenCost(_tokenId);
+        bool tokenIsAllow = tokenManager.getTokenIsAllowed(_tokenId);
         uint numBorrowing = userManager.getNumBorrowing(msg.sender);
+        require(tokenIsAllow);
         require(numBorrowing < maxBorrowing);
         require(cost == msg.value);
         tokenManager.changeReader(_tokenId, msg.sender);

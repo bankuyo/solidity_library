@@ -45,6 +45,13 @@ const initialCreatingBookToken = async(account) => {
     })
 }
 
+const initialTurnTrueAllowabilityStatus = async (account) => {
+    await library.methods.allowTokenToContract(0,true).send({
+        from:account,
+        gas:'1000000'
+    })
+}
+
 const initialBorrowing = async (account) => {
     await library.methods.borrowBook(0).send({
         from: account,
@@ -171,6 +178,7 @@ describe('Library', () => {
         await initialRegister(accounts[1]);
         await initialRegister(accounts[2]);
         await initialCreatingBookToken(accounts[1]);
+        await initialTurnTrueAllowabilityStatus(accounts[1]);
         
         await library.methods.borrowBook(0).send({
             from: accounts[2],
@@ -194,6 +202,7 @@ describe('Library', () => {
         await initialRegister(accounts[1]);
         await initialRegister(accounts[2]);
         await initialCreatingBookToken(accounts[1]);
+        await initialTurnTrueAllowabilityStatus(accounts[1]);
         await initialBorrowing(accounts[2]);
 
         await library.methods.returnBook(0).send({
