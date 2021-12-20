@@ -54,7 +54,7 @@ contract Library {
 
     // Add Book
     function addBook(string memory _bookId, string memory _title, uint _price, address _authorAddress) public restricted {
-        require(bookManager.getIsStoredBook(_bookId));
+        require(!bookManager.getIsStoredBook(_bookId));
         bookManager.addBook(_bookId, _title, _price, _authorAddress);
     }
 
