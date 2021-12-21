@@ -19,8 +19,7 @@ contract LibraryFactory {
 
 contract Library {
     address public owner;
-    mapping(address => bool) public staff;
-
+    
     BookManager private bookManager;
     UserManager private userManager;
     TokenManager private tokenManager;
@@ -45,7 +44,6 @@ contract Library {
 
     constructor (uint _maxBorrowing, address _creator) {
         owner = _creator;
-        staff[owner] = true;
         bookManager = new BookManager(owner);
         userManager = new UserManager(owner);
         tokenManager = new TokenManager(owner);
@@ -53,11 +51,12 @@ contract Library {
         managerAddress.push(address(userManager));
         managerAddress.push(address(tokenManager));
         maxBorrowing = _maxBorrowing;
+        userManager.InviteStaff(owner);
     }
 
     // Invite staff
     function inviteStaff(address _staffAddress) public restricted{
-        staff[_staffAddress] = true;
+        userManager.InviteStaff(_staffAddress);
     }
 
     // Register user
@@ -72,10 +71,13 @@ contract Library {
     }
 
     // Modify Book
-    function modifyBook( uint _index, string memory _bookId, string memory _title, uint _price, address _authorAddress)
-        public {
-            require(staff[msg.sender]);
-            bookManager.modifyBook(_index, _bookId, _title, _price, _authorAddress);
+    function modifyBook( uint _bookIndex, string memory _bookId, string memory _title, uint _price)
+        public staffRestricted {
+            bookManager.modifyBook(_bookIndex, _bookId, _title, _price);
+    }
+
+    function changeAuthorAddress(uint _bookIndex, address _authorAddress) public restricted {
+        bookManager.changeAuthorAddress(_bookIndex, _authorAddress);
     }
 
     // Create book token 

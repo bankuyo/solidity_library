@@ -23,8 +23,10 @@ interface BookManagerInterface {
         uint _index,
         string memory _bookid,
         string memory _title,
-        uint _price,
-        address _authorAddress) external;
+        uint _price
+        ) external;
+
+    function changeAuthorAddress(uint _bookIndex, address _authorAddress) external;
 }
 
 contract BookManager is BookManagerInterface {
@@ -59,7 +61,7 @@ contract BookManager is BookManagerInterface {
         isStoredBook[_bookId] = true;
     }
 
-    function modifyBook( uint _bookIndex, string memory _bookid, string memory _title, uint _price, address _authorAddress)
+    function modifyBook( uint _bookIndex, string memory _bookid, string memory _title, uint _price)
         public restricted {
         // Need implementing staff
         BookInformation storage book = bookInformations[_bookIndex];
@@ -67,6 +69,10 @@ contract BookManager is BookManagerInterface {
         book.title = _title;
         book.price = _price;
         book.numToken = 0;
+    }
+
+    function changeAuthorAddress(uint _bookIndex, address _authorAddress) public restricted{
+        BookInformation storage book = bookInformations[_bookIndex];
         book.authorAddress = _authorAddress;
     }
 

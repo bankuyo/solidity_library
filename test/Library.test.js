@@ -11,7 +11,6 @@ const compiledTokenManager = require('../ethereum/build/TokenManager.json');
 
 let accounts;
 let library;
-let libraryFactory;
 let bookManager;
 let userManager;
 let tokenManager;
@@ -118,7 +117,7 @@ describe('Library', () => {
 
     it('can invite a staff', async () => {
         await library.methods.inviteStaff(accounts[1]).send({ from: accounts[0], gas: '1000000'});
-        const isValid = await library.methods.staff(accounts[1]).call();
+        const isValid = await userManager.methods.getIsStaff(accounts[1]).call();
         assert(isValid);
     })
 
@@ -163,7 +162,7 @@ describe('Library', () => {
     it('allow to modify book inforamtion', async () => {
         await initialAddBook();
         await library.methods.inviteStaff(accounts[1]).send({ from: accounts[0], gas: '1000000'});
-        await library.methods.modifyBook(0, INITIAL_BOOKID, 'HELLO',INITIAL_PRICE, accounts[3]).send({
+        await library.methods.modifyBook(0, INITIAL_BOOKID, 'HELLO',INITIAL_PRICE).send({
             from: accounts[1],
             gas: '3000000'
         });

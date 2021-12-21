@@ -36,8 +36,9 @@ contract UserManager is UserManagerInterface{
     // user address => tokenId => true / false
     mapping(address => mapping(uint => bool)) public isBorrowingTable;
 
-    uint public numStaff;
+    uint numStaff;
     mapping(address => bool) isStaff;
+    address[] staff;
 
     modifier restricted(){
         require(contractAddress == msg.sender);
@@ -61,6 +62,13 @@ contract UserManager is UserManagerInterface{
 
     function InviteStaff(address _staffAddress) public restricted {
         isStaff[_staffAddress] = true;
+        staff.push(_staffAddress);
+        numStaff++;
+    }
+
+    function resignStaff(address _staffAddress) public restricted {
+        isStaff[_staffAddress] = false;
+        numStaff--;
     }
 
     // valid if user actually borrowed / not borrowed===========================
@@ -98,6 +106,10 @@ contract UserManager is UserManagerInterface{
     function getIsStaff(address _staffAddress) external view returns(bool){
         return isStaff[_staffAddress];
     }
+    
+    function getNumStaff() external view returns(uint){
+        return numStaff;
+    }
 
     function getNumBorrowing(address _userAddress) external view returns(uint){
         User storage user = users[_userAddress];
@@ -107,4 +119,5 @@ contract UserManager is UserManagerInterface{
     function getIsBorrowing(address _userAddress, uint _tokenId) external view returns(bool){
         return isBorrowingTable[_userAddress][_tokenId];
     }
+
 }
