@@ -121,6 +121,18 @@ describe('Library', () => {
         assert(isValid);
     })
 
+    it('can resign a staff', async () => {
+        await library.methods.inviteStaff(accounts[1]).send({ from: accounts[0], gas: '1000000'});
+        const isStaff = await userManager.methods.getIsStaff(accounts[1]).call();
+        assert(isStaff);
+        
+        await library.methods.resignStaff(accounts[1]).send({ from: accounts[0], gas: '1000000'});
+        const isNotStaff = await userManager.methods.getIsStaff(accounts[1]).call();
+        const numStaff= await userManager.methods.getNumStaff().call();
+        assert(!isNotStaff);
+        assert.equal(numStaff, 1)
+    })
+
     it('user can register', async () => {
         await library.methods.register().send({
             from: accounts[1],

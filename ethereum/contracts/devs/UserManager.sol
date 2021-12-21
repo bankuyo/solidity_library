@@ -60,7 +60,7 @@ contract UserManager is UserManagerInterface{
         user.numPurchased = 0;
     }
 
-    function InviteStaff(address _staffAddress) public restricted {
+    function inviteStaff(address _staffAddress) public restricted {
         isStaff[_staffAddress] = true;
         staff.push(_staffAddress);
         numStaff++;
@@ -106,7 +106,7 @@ contract UserManager is UserManagerInterface{
     function getIsStaff(address _staffAddress) external view returns(bool){
         return isStaff[_staffAddress];
     }
-    
+
     function getNumStaff() external view returns(uint){
         return numStaff;
     }

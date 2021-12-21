@@ -51,12 +51,16 @@ contract Library {
         managerAddress.push(address(userManager));
         managerAddress.push(address(tokenManager));
         maxBorrowing = _maxBorrowing;
-        userManager.InviteStaff(owner);
+        userManager.inviteStaff(owner);
     }
 
     // Invite staff
     function inviteStaff(address _staffAddress) public restricted{
-        userManager.InviteStaff(_staffAddress);
+        userManager.inviteStaff(_staffAddress);
+    }
+
+    function resignStaff(address _staffAddress) public restricted{
+        userManager.resignStaff(_staffAddress);
     }
 
     // Register user
