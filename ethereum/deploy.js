@@ -1,4 +1,4 @@
-const { PASSPHRASE, PROVIDER } = require('./confidentials/provider');
+const { PASSPHRASE, PROVIDER } = require('./keys/provider');
 
 const HDWalletProvider = require("@truffle/hdwallet-provider");
 const Web3 = require("web3");
