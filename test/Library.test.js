@@ -14,6 +14,9 @@ let library;
 let bookManager;
 let userManager;
 let tokenManager;
+let bookManagerAddress;
+let userManagerAddress;
+let tokenManagerAddress
 
 // INITIAL VALUES=====================================
 const MAX_BORROWING = 2;
@@ -68,7 +71,7 @@ beforeEach(async () => {
 
     factory = await new web3.eth.Contract(compiledLibraryFactory.abi)
         .deploy({
-            data: compiledLibraryFactory.evm.bytecode.object
+            data: compiledLibraryFactory.evm.bytecode.object,
         })
         .send({
             from: accounts[0],
@@ -94,8 +97,10 @@ beforeEach(async () => {
     //         from: accounts[0],
     //         gas: '6000000'
     //     });
-
-    [bookManagerAddress, userManagerAddress, tokenManagerAddress] = await library.methods.getManagerAddress().call();
+    
+    bookManagerAddress = await library.methods.managerAddress(0).call();
+    userManagerAddress = await library.methods.managerAddress(1).call();
+    tokenManagerAddress = await library.methods.managerAddress(2).call();
     bookManager = new web3.eth.Contract(compiledBookManager.abi, bookManagerAddress);
     userManager = new web3.eth.Contract(compiledUserManager.abi, userManagerAddress);
     tokenManager= new web3.eth.Contract(compiledTokenManager.abi, tokenManagerAddress);

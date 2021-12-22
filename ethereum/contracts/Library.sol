@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.11;
+pragma solidity 0.8.10;
 import './devs/BookManager.sol';
 import './devs/UserManager.sol';
 import './devs/TokenManager.sol';
@@ -23,7 +23,7 @@ contract Library {
     BookManager private bookManager;
     UserManager private userManager;
     TokenManager private tokenManager;
-    address[] managerAddress;
+    address[] public managerAddress;
 
     uint public maxBorrowing;
 
@@ -116,10 +116,5 @@ contract Library {
         require(reader == msg.sender);
         tokenManager.returnBook(_tokenId);
         userManager.returned(msg.sender, _tokenId);
-    }
-
-    // Retreive Manager address
-    function getManagerAddress() external restricted view returns(address[] memory){
-        return managerAddress;
     }
 }
