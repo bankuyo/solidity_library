@@ -1,14 +1,21 @@
 import React from 'react';
 import { Menu } from 'semantic-ui-react';
+import Link from 'next/link';
 
 // Track status with redux after
 const Header = () => {
     return (
         <Menu style={{marginTop: '15px'}}>
-            <Menu.Item>Block Library</Menu.Item>
+            <Link href={'/'}>
+                <a className='item'>Block Library</a>
+            </Link>
             <Menu.Menu position='right'>
-                <Menu.Item>Login</Menu.Item>
-                <Menu.Item>Register</Menu.Item>
+                <Link href={'/'}>
+                    <a className='item'>Login</a>
+                </Link>
+                <Link href={'/'}>
+                    <a className='item'>Register</a>
+                </Link>
             </Menu.Menu>
         </Menu>
     )

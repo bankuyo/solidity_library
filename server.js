@@ -5,7 +5,8 @@ const app = next({
     dev: process.env.NODE_ENV !== 'production'
 });
 
-const handle = app.getRequestHandler()
+const handle = app.getRequestHandler();
+
 
 app.prepare().then(() => {
     createServer(handle).listen(3000, (err) => {
