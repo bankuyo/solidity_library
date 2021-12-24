@@ -1,6 +1,7 @@
 node_modules
 
-/ethereum/keys
+/ethereum/
+
 .next
 
 /Remix

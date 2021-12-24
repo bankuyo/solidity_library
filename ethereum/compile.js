@@ -15,6 +15,8 @@ const BookManagerSource = fs.readFileSync(BookManagerPath, 'utf-8');
 const UserManagerSource = fs.readFileSync(UserManagerPath, 'utf-8');
 const TokenManagerSource = fs.readFileSync(TokenManagerPath, 'utf-8');
 
+const openzepplinSource = fs.readFileSync(TokenManagerPath, 'utf-8');
+
 
 const input = {
     language: 'Solidity',
@@ -38,6 +40,7 @@ function findImports(path) {
   if(path == 'devs/UserManager.sol') importSource = UserManagerSource;
   if(path == 'devs/TokenManager.sol') importSource = TokenManagerSource;
   if(path == 'Interfaces.sol') importSource = InterfacesManagerSource;
+
   return {
     contents: importSource,
   }
