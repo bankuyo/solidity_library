@@ -5,9 +5,19 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 import './devs/TokenManager.sol';
 import './devs/BookManager.sol';
+import './devs/UserManager.sol';
 
 // all payable functions are to implement here
-contract Library is TokenManager, BookManager, Ownable{
+contract Library is TokenManager, BookManager, UserManager, Ownable{
+    uint public maxBorrowing;
+    constructor(uint _maxBorrowing){
+        maxBorrowing = _maxBorrowing;
+    }
+
+    // change max Borrowing number
+    function changeMaxBorrowing(uint _maxBorrowing) external onlyOwner {
+        maxBorrowing = _maxBorrowing;
+    }
 
     // add book
     function addBook(address _author, uint _price) external onlyOwner {
@@ -26,15 +36,18 @@ contract Library is TokenManager, BookManager, Ownable{
     }
 
     // borrow Book
-    function borrowBook(uint _tokenId ) external payable{
+    function borrowBook(uint _tokenId ) external restrictedBorrow(msg.sender, maxBorrowing) payable{
         address owner = ownerOf(_tokenId);
         _borrowToken(_tokenId, owner, msg.sender, msg.value);
+        _userBorrow(msg.sender);
     }
 
     // return Book
     function returnBook(uint _tokenId) external {
         address owner = ownerOf(_tokenId);
+        address borrower = getTokenBorrower(_tokenId);
         _returnToken(_tokenId, owner);
+        _userReturn(borrower);
     }
 
     // configure token

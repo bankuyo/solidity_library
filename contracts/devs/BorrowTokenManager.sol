@@ -18,7 +18,7 @@ contract BorrowTokenManager {
         return tokenData[_tokenId];
     }
 
-    function getTokenBorrower(uint _tokenId) external  view returns(address){
+    function getTokenBorrower(uint _tokenId) public  view returns(address){
         BorrowToken memory token = tokenData[_tokenId];
         return token.borrower;
     }

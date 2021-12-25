@@ -32,13 +32,13 @@ beforeEach(async () => {
     library = await new web3.eth.Contract(compiledLibrary.abi)
         .deploy({
             data: compiledLibrary.bytecode,
+            arguments: [2]
         })
         .send({
             from: accounts[0],
             gas: '5000000'
         })
 });
-
 
 describe('Fundamental', async () => {
     it('has a correct owner', async () =>{
@@ -242,6 +242,23 @@ describe('Borrow Book', async () => {
         assert(false);
     });
 
+    it('can not borrow the book which is already borrowed', async () => {
+        await setBook(10);
+        await purchaseBook(1,accounts[0],10);
+        await borrowBook(1,0,accounts[1]);
+        try {
+            await library.methods.borrowBook(1).send({
+                from :accounts[1],
+                value: 0,
+                gas: '1000000'
+            });
+        } catch (err){
+            assert(true);
+            return;
+        }
+        assert(false);
+    });
+
     it('can borrow book which configured', async () => {
         await setBook(10);
         await purchaseBook(1,accounts[0],10);
@@ -271,7 +288,30 @@ describe('Borrow Book', async () => {
             return;
         }
         assert(false);
-    })
+    });
+
+    it('restricted by maxBorrowingNumber', async () =>{
+        await setBook(10);
+
+        await purchaseBook(1,accounts[0],10);
+        await purchaseBook(1,accounts[0],10);
+        await purchaseBook(1,accounts[0],10);
+
+        await borrowBook(1,0,accounts[1]);
+        await borrowBook(2,0,accounts[1]);
+
+        try{
+            await library.methods.borrowBook(3).send({
+                from: accounts[1],
+                value:0,
+                gas:'1000000'
+            })
+        } catch (err) {
+            assert(true);
+            return;
+        }
+        assert(false);
+    });
 
 })
 
