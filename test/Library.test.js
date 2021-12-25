@@ -119,6 +119,28 @@ describe('Fundamental', async () => {
         }
         assert(false);
     })
+
+    it('can change the maxBorrowing', async () => {
+        await library.methods.changeMaxBorrowing(10).send({
+            from : accounts[0],
+            gas:'1000000'
+        });
+        const maxNum  = await library.methods.maxBorrowing().call();
+        assert.equal(maxNum, 10);
+    })
+
+    it('deny changing the maxBorrowing from non-owner user', async () => {
+        try{
+            await library.methods.changeMaxBorrowing(10).send({
+                from : accounts[1],
+                gas:'1000000'
+            });
+        } catch (err) {
+            assert(true);
+            return;
+        }
+        assert(false);
+    })
 })
 
 describe('Adding and Modify Book', async () => {
