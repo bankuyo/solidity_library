@@ -35,7 +35,7 @@ beforeEach(async () => {
         })
         .send({
             from: accounts[0],
-            gas: '6000000'
+            gas: '5000000'
         })
 });
 
@@ -83,10 +83,45 @@ describe('Fundamental', async () => {
             return;
         }
         assert(false);
+    });
+
+    it('can change the allowToContract status from token owner', async () => {
+        await setBook(10);
+        await purchaseBook(1,accounts[1],10);
+        await library.methods.changeBorrowAllowance(1, false).send({
+            from: accounts[1],
+            gas:'1000000'
+        });
+        
+        try{
+            await library.methods.borrowBook(1).send({
+                from: accounts[0],
+                gas:'1000000'
+            });
+        } catch (err) {
+            assert(true);
+            return;
+        }
+        assert(false);
+    })
+
+    it('deny changing the allowToContract status from non-tokenowner', async () => {
+        await setBook(10);
+        await purchaseBook(1,accounts[1],10);
+        try {
+            await library.methods.changeBorrowAllowance(1, false).send({
+                from: accounts[0],
+                gas:'1000000'
+            });
+        } catch (err){
+           assert(true);
+           return;
+        }
+        assert(false);
     })
 })
 
-describe('Adding Book', async () => {
+describe('Adding and Modify Book', async () => {
     it('can add book by Library owner', async () => {
         await library.methods.addBook(accounts[1], 0).send({
             from: accounts[0],
@@ -99,6 +134,32 @@ describe('Adding Book', async () => {
     it('deny non-owner account to add book', async() => {
         try {
             await library.methods.addBook(accounts[0], 0).send({
+                from: accounts[1],
+                gas: '1000000'
+            })
+        } catch (err) {
+            assert(true);
+            return;
+        }
+        assert(false);
+    });
+
+    it('can modify book by Library owner', async () => {
+        await setBook(10);
+
+        await library.methods.modifyBook(1, accounts[2], 100).send({
+            from: accounts[0],
+            gas: '1000000'
+        })
+        const book = await library.methods.getBookData(1).call();
+        assert.equal(accounts[2], book.author);
+        assert.equal(100, book.price)
+    });
+
+    it('deny non-owner account to modify book', async() => {
+        await setBook(10);
+        try {
+            await library.methods.modifyBook(1,accounts[0], 0).send({
                 from: accounts[1],
                 gas: '1000000'
             })

@@ -32,6 +32,12 @@ contract BookManager {
         book.price = _price;
     }
 
+    function _modifyBook(uint _bookId,address _author, uint _price) internal {
+        Book storage book = Books[_bookId];
+        book.author = _author;
+        book.price = _price;
+    }
+
     function getPurchaser(uint _bookId) external bookIsExist(_bookId) view returns(address[] memory) {
         Book memory book = Books[_bookId];
         return book.purchaser;
@@ -39,6 +45,11 @@ contract BookManager {
 
     function getTotalBook() external view returns(uint){
         return _bookIds.current();
+    }
+
+    function getBookData(uint _bookId) external view returns(Book memory) {
+        Book memory book = Books[_bookId];
+        return book;
     }
 
 

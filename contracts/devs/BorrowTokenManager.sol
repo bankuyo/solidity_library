@@ -26,6 +26,7 @@ contract BorrowTokenManager {
     function _borrowRequirement(BorrowToken memory _token, address _owner, uint _payment) internal virtual pure {
         require(_token.borrower == _owner);
         require(_token.cost == _payment);
+        require(_token.allowToContract);
     }
 
     function _returnRequirement(BorrowToken memory _token, address _tokenOwner, address _sender) internal virtual {
@@ -38,7 +39,7 @@ contract BorrowTokenManager {
         BorrowToken storage token = tokenData[_tokenId];
         token.borrower = _tokenOwner;
         token.bookId = _bookId;
-        token.allowToContract=false;
+        token.allowToContract=true;
         token.period = 1;
         token.cost = 0;
         token.start = 0;

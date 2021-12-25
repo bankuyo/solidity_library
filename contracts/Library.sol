@@ -14,6 +14,11 @@ contract Library is TokenManager, BookManager, Ownable{
         _addBook(_author, _price);
     }
 
+    // modify book
+    function modifyBook(uint _bookId,address _author, uint _price) external onlyOwner {
+        _modifyBook(_bookId,_author, _price);
+    }
+
     // purchase Book
     function purchaseBook(uint _bookId) external payable {
         _purchaseBook(_bookId, msg.sender , msg.value);
@@ -37,6 +42,11 @@ contract Library is TokenManager, BookManager, Ownable{
         address owner = ownerOf(_tokenId);
         require(owner == msg.sender);
         _configBorrow(_tokenId, _period, _cost);
+    }
+    function changeBorrowAllowance(uint _tokenId, bool _isAllow) external {
+        address owner = ownerOf(_tokenId);
+        require(owner == msg.sender);
+        _changeBorrowAllowance(_tokenId, _isAllow);
     }
 
 }
