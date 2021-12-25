@@ -20,13 +20,13 @@ contract Library is TokenManager, BookManager, UserManager, Ownable{
     }
 
     // add book
-    function addBook(address _author, uint _price) external onlyOwner {
-        _addBook(_author, _price);
+    function addBook(address _author, uint _price, string memory _title) external onlyOwner {
+        _addBook(_author, _price, _title);
     }
 
     // modify book
-    function modifyBook(uint _bookId,address _author, uint _price) external onlyOwner {
-        _modifyBook(_bookId,_author, _price);
+    function modifyBook(uint _bookId,address _author, uint _price, string memory _title) external onlyOwner {
+        _modifyBook(_bookId,_author, _price, _title);
     }
 
     // purchase Book

@@ -11,6 +11,7 @@ contract BookManager {
     struct Book{
         address author;
         uint price;
+        string title;
         Counters.Counter purchasedIds;
         address[] purchaser;
     }
@@ -25,15 +26,17 @@ contract BookManager {
         require(book.price == _payment);
     }
 
-    function _addBook(address _author, uint _price) internal {
+    function _addBook(address _author, uint _price, string memory _title) internal {
         _bookIds.increment();
         Book storage book = Books[_bookIds.current()];
+        book.title = _title;
         book.author = _author;
         book.price = _price;
     }
 
-    function _modifyBook(uint _bookId,address _author, uint _price) internal {
+    function _modifyBook(uint _bookId,address _author, uint _price, string memory _title) internal {
         Book storage book = Books[_bookId];
+        book.title = _title;
         book.author = _author;
         book.price = _price;
     }
