@@ -51,8 +51,7 @@ contract BookManager {
     }
 
     function getBookData(uint _bookId) external view returns(Book memory) {
-        Book memory book = Books[_bookId];
-        return book;
+        return Books[_bookId];
     }
 
 

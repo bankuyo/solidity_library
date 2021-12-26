@@ -10,7 +10,7 @@ let accounts;
 
 // Helper function==============================
 const setBook = async (price) => {
-    await library.methods.addBook(accounts[0], price).send({from: accounts[0],gas: '1000000'})
+    await library.methods.addBook(accounts[0], price, 'First book').send({from: accounts[0],gas: '1000000'})
 }
 const purchaseBook = async (bookId, account, value) => {
     await library.methods.purchaseBook(bookId).send({ from: account, value:value, gas:'1000000' });
@@ -145,7 +145,7 @@ describe('Fundamental', async () => {
 
 describe('Adding and Modify Book', async () => {
     it('can add book by Library owner', async () => {
-        await library.methods.addBook(accounts[1], 0).send({
+        await library.methods.addBook(accounts[1], 0, 'First title').send({
             from: accounts[0],
             gas: '1000000'
         })
@@ -155,7 +155,7 @@ describe('Adding and Modify Book', async () => {
 
     it('deny non-owner account to add book', async() => {
         try {
-            await library.methods.addBook(accounts[0], 0).send({
+            await library.methods.addBook(accounts[0], 0,'First title').send({
                 from: accounts[1],
                 gas: '1000000'
             })
@@ -169,7 +169,7 @@ describe('Adding and Modify Book', async () => {
     it('can modify book by Library owner', async () => {
         await setBook(10);
 
-        await library.methods.modifyBook(1, accounts[2], 100).send({
+        await library.methods.modifyBook(1, accounts[2], 100,'First title').send({
             from: accounts[0],
             gas: '1000000'
         })
@@ -181,7 +181,7 @@ describe('Adding and Modify Book', async () => {
     it('deny non-owner account to modify book', async() => {
         await setBook(10);
         try {
-            await library.methods.modifyBook(1,accounts[0], 0).send({
+            await library.methods.modifyBook(1,accounts[0], 0, 'First title').send({
                 from: accounts[1],
                 gas: '1000000'
             })
