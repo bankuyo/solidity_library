@@ -2,7 +2,6 @@ import React from 'react';
 import "semantic-ui-css/semantic.min.css";
 import {Card} from 'semantic-ui-react';
 
-import web3 from '../ethereum/web3';
 import library from '../ethereum/Library';
 
 class LandingPage extends React.Component {
@@ -23,8 +22,8 @@ class LandingPage extends React.Component {
         const tokenCards = this.props.tokens.map((token) => {
             return ({
                 header: token.owner,
-                meta: token.cost,
-                description: `You must return book at ${token.period} days after`,
+                meta: `You must return book at ${token.period} days after`,
+                description: `Borrwoing cost: ${token.cost} wei`,
                 fluid: true
             })
         })

@@ -62,7 +62,7 @@ class BookStore extends React.Component{
                         {this.renderTableContent(
                             book.author,
                             book.price,
-                            book.purchased
+                            book.purchasers.length
                         )}
                         <Button 
                             primary 
