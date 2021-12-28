@@ -1,41 +1,52 @@
 import React from 'react';
 import "semantic-ui-css/semantic.min.css";
-import {Card} from 'semantic-ui-react';
+import {Card, Statistic, Button} from 'semantic-ui-react';
+import Link from 'next/link';
 
 import library from '../ethereum/Library';
 
+
+import Layout from '../components/Layout'
+
 class LandingPage extends React.Component {
     static async getInitialProps(){
-        const tokenNum = await library.methods.totalSupply().call();
-
-        const tokens = [];
-        for(let i = 1; i <= tokenNum; i++){
-            let token = await library.methods.getTokenData(i).call();
-            let tokenOwner = await library.methods.ownerOf(i).call();
-            let tokenData = {...token, owner: tokenOwner};
-            tokens.push(tokenData);
+        const purchasersAddress = await library.methods.getPurchasersAddress().call();
+        const purchasers = [];
+        for (let i = 0; i < purchasersAddress.length; i++){
+            let purchaser= await library.methods.getUserData(purchasersAddress[i]).call();
+            let purchaserTokenNum = purchaser.tokenIds.length;
+            let purchaserData = {...purchaser, purchaserAddress:purchasersAddress[i], purchaserTokenNum };
+            purchasers.push(purchaserData);
         }
-        return {tokens};
+        return {purchasers};
     }
 
     renderCard(){
-        const tokenCards = this.props.tokens.map((token) => {
+        const purchaserCards = this.props.purchasers.map((purchaser) => {
             return ({
-                header: token.owner,
-                meta: `You must return book at ${token.period} days after`,
-                description: `Borrwoing cost: ${token.cost} wei`,
+                header: (
+                    <Link href={`/${purchaser.purchaserAddress}/library`}>
+                        <a style={{fontSize:'20px', color: 'inherit'}}>{purchaser.purchaserAddress}</a>
+                    </Link>),
+                meta: 'overview',
+                description: (
+                    <div>
+                        <Statistic label="Books" value={purchaser.purchaserTokenNum} />
+                    </div>
+                    ),
                 fluid: true
             })
         })
-        return <Card.Group items={tokenCards}/>
+        return <Card.Group items={purchaserCards}/>
     }
 
     render() {
+        console.log(this.props.purchasers);
         return(
-            <div>
+            <Layout>
                 <h2>Landing Page</h2>
                 {this.renderCard()}
-            </div>
+            </Layout>
         );
     };
 };

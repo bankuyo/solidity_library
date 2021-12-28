@@ -3,6 +3,7 @@ import 'semantic-ui-css/semantic.min.css';
 import {Form, Input, Button, Label, Message} from 'semantic-ui-react';
 import Router from 'next/router';
 
+import Layout from '../../../components/Layout';
 import library from '../../../ethereum/Library';
 import web3 from '../../../ethereum/web3';
 
@@ -16,7 +17,7 @@ class ModifyToken extends React.Component {
     }
 
     static async getInitialProps({query}){
-        const tokenId = query.id;
+        const tokenId = query.tokenId;
         const token = await library.methods.getTokenData(tokenId).call();
         const book = await library.methods.getBookData(token[1]).call();
         return ({
@@ -74,11 +75,11 @@ class ModifyToken extends React.Component {
 
     render(){
         return(
-            <div>
+            <Layout>
                 <h2>Modify Token</h2>
                 <h3>{`Title: " ${this.props.title} "`}</h3>
                 {this.renderForm()}
-            </div>    
+            </Layout>    
         );
     }
 }

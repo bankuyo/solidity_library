@@ -3,6 +3,7 @@ import {Form, Button, Input, Message } from 'semantic-ui-react';
 import "semantic-ui-css/semantic.min.css";
 import Router from 'next/router'
 
+import Layout from '../../components/Layout';
 import web3 from '../../ethereum/web3';
 import library from '../../ethereum/Library';
 
@@ -67,10 +68,10 @@ class AddBookPage extends React.Component {
 
     render(){
         return(
-            <div>
+            <Layout>
                 <h2>Add Book</h2>
                 {this.renderForm()}
-            </div>
+            </Layout>
         );
     }
 }

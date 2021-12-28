@@ -232,6 +232,27 @@ describe('Purchase Book(Token)', async () => {
         }
         assert(false);
     });
+
+    it('appropreatly update the user purchase data ', async () => {
+        await setBook(10);
+        await purchaseBook(1,accounts[0],10);
+        const user = await library.methods.getUserData(accounts[0]).call();
+        assert.equal(user.tokenIds, 1);
+    })
+
+    it('appropreatly update the user purchase data several times', async () => {
+        await setBook(10);
+        await setBook(20);
+        await setBook(30);
+        await purchaseBook(1,accounts[0],10);
+        await purchaseBook(1,accounts[1],10);
+        await purchaseBook(3,accounts[0],30);
+        await purchaseBook(2,accounts[0],20);
+        const user = await library.methods.getUserData(accounts[0]).call();
+        assert.equal(user.tokenIds[0], 1);
+        assert.equal(user.tokenIds[1], 3);
+        assert.equal(user.tokenIds[2], 4);
+    })
 })
 
 describe('Borrow Book', async () => {

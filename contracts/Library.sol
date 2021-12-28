@@ -33,6 +33,8 @@ contract Library is TokenManager, BookManager, UserManager, Ownable{
     function purchaseBook(uint _bookId) external payable {
         _purchaseBook(_bookId, msg.sender , msg.value);
         _purchaseToken(_bookId, msg.sender);
+        uint tokenId = totalSupply();
+        _userPurchase(msg.sender, tokenId);
     }
 
     // borrow Book
