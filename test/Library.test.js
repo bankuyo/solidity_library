@@ -2,282 +2,425 @@ const assert = require('assert');
 const ganache = require('ganache-cli');
 const Web3 = require('web3');
 const web3 = new Web3(ganache.provider());
+const compiledLibrary = require('../build/contracts/Library.json');
 
-const compiledLibrary = require('../ethereum/build/Library.json');
-const compiledLibraryFactory = require('../ethereum/build/LibraryFactory.json');
-const compiledBookManager = require('../ethereum/build/BookManager.json');
-const compiledUserManager = require('../ethereum/build/UserManager.json');
-const compiledTokenManager = require('../ethereum/build/TokenManager.json');
-
-let accounts;
 let library;
-let bookManager;
-let userManager;
-let tokenManager;
-let bookManagerAddress;
-let userManagerAddress;
-let tokenManagerAddress
+let accounts;
 
-// INITIAL VALUES=====================================
-const MAX_BORROWING = 2;
-const INITIAL_BOOKID = '';
-const INITIAL_TITLE = '';
-const INITIAL_PRICE = 100;
-const INITIAL_PERIOD = 7;
-const INITIAL_COST = 0;
-
-// Helper functions ===================================
-const initialAddBook = async () => {
-    await library.methods.addBook(INITIAL_BOOKID, INITIAL_TITLE, INITIAL_PRICE, accounts[3])
-        .send({
-            from: accounts[0],
-            gas: '1000000'
-    })
+// Helper function==============================
+const setBook = async (price) => {
+    await library.methods.addBook(accounts[0], price, 'First book').send({from: accounts[0],gas: '1000000'})
 }
-
-const initialRegister = async (account) => {
-    await library.methods.register().send({
+const purchaseBook = async (bookId, account, value) => {
+    await library.methods.purchaseBook(bookId).send({ from: account, value:value, gas:'1000000' });
+}
+const borrowBook = async (tokenId, value, account) => {
+    await library.methods.borrowBook(tokenId).send({ from :account, value: value, gas: '1000000' });
+}
+const configBorrow = async (_tokenId, account, period, cost) => {
+    await library.methods.configBorrow(_tokenId, period, cost).send({
         from: account,
         gas: '1000000'
-    })
+    });
 }
-const initialCreatingBookToken = async(account) => {
-    await library.methods.createBookToken(0,INITIAL_PERIOD,INITIAL_COST).send({
-        value: INITIAL_PRICE,
-        from: account,
-        gas:'1000000'
-    })
-}
-
-const initialTurnTrueAllowabilityStatus = async (account) => {
-    await library.methods.allowTokenToContract(0,true).send({
-        from:account,
-        gas:'1000000'
-    })
-}
-
-const initialBorrowing = async (account) => {
-    await library.methods.borrowBook(0).send({
-        from: account,
-        value: INITIAL_COST,
-        gas: '1000000'
-    })
-}
-// ===================================================
-
-//Create accounts and a Smart contract instance.
 beforeEach(async () => {
     accounts = await web3.eth.getAccounts();
 
     factory = await new web3.eth.Contract(compiledLibraryFactory.abi)
         .deploy({
-            data: compiledLibraryFactory.evm.bytecode.object,
+            data: compiledLibrary.bytecode,
+            arguments: [2]
         })
         .send({
             from: accounts[0],
-            gas: '6000000'
+            gas: '5000000'
         })
-
-    await factory.methods.createLibrary(2).send({
-        from : accounts[0],
-        gas:'6000000'
-    });
-
-    [ libraryAddress ] = await factory.methods.getDeployedLibraries().call(); 
-    library = await new web3.eth.Contract(
-        compiledLibrary.abi,
-        libraryAddress
-    );
-    // library = await new web3.eth.Contract(compiledLibrary.abi)
-    //     .deploy({
-    //         data: compiledLibrary.evm.bytecode.object,
-    //         arguments: [MAX_BORROWING]
-    //     })
-    //     .send({
-    //         from: accounts[0],
-    //         gas: '6000000'
-    //     });
-    
-    bookManagerAddress = await library.methods.managerAddress(0).call();
-    userManagerAddress = await library.methods.managerAddress(1).call();
-    tokenManagerAddress = await library.methods.managerAddress(2).call();
-    bookManager = new web3.eth.Contract(compiledBookManager.abi, bookManagerAddress);
-    userManager = new web3.eth.Contract(compiledUserManager.abi, userManagerAddress);
-    tokenManager= new web3.eth.Contract(compiledTokenManager.abi, tokenManagerAddress);
 });
 
-
-
-describe('Library', () => {
-    it('deploys a factory and a campaign', () => {
-        assert.ok(library.options.address);
+describe('Fundamental', async () => {
+    it('has a correct owner', async () =>{
+        const owner = await library.methods.owner().call();
+        assert.equal(owner, accounts[0]);
     });
 
-    it('has a owner address && maxBorrowing', async () => {
-        const ownerAddress = await library.methods.owner().call();
-        const maxBorrowing = await library.methods.maxBorrowing().call();
-        assert.equal(ownerAddress, accounts[0]);
-        assert.equal(maxBorrowing, MAX_BORROWING);
+    it('deny to access undefined book Id ', async () => {
+        await setBook(10);
+        try{
+            await purchaseBook(3,accounts[0],10);
+        } catch (err){
+            assert(true);
+            return;
+        }
+        assert(false);
     });
-
-    it('can invite a staff', async () => {
-        await library.methods.inviteStaff(accounts[1]).send({ from: accounts[0], gas: '1000000'});
-        const isValid = await userManager.methods.getIsStaff(accounts[1]).call();
-        assert(isValid);
-    })
-
-    it('can resign a staff', async () => {
-        await library.methods.inviteStaff(accounts[1]).send({ from: accounts[0], gas: '1000000'});
-        const isStaff = await userManager.methods.getIsStaff(accounts[1]).call();
-        assert(isStaff);
-        
-        await library.methods.resignStaff(accounts[1]).send({ from: accounts[0], gas: '1000000'});
-        const isNotStaff = await userManager.methods.getIsStaff(accounts[1]).call();
-        const numStaff= await userManager.methods.getNumStaff().call();
-        assert(!isNotStaff);
-        assert.equal(numStaff, 1)
-    })
-
-    it('user can register', async () => {
-        await library.methods.register().send({
+    it('can configure the lending token cost and period', async () =>{
+        await setBook(10);
+        await purchaseBook(1,accounts[1],10);
+        await library.methods.configBorrow(1, 7, 100).send({
             from: accounts[1],
             gas: '1000000'
         })
-        const isRegistered = await userManager.methods.isValidUser(accounts[1]).call();
-        assert(isRegistered);
+
+        const token = await library.methods.getTokenData(1).call();
+        assert.equal(token.period, 7);
+        assert.equal(token.cost, 100);
     });
 
-    it('allow to add new book', async () => {
-        await library.methods.addBook(INITIAL_BOOKID, INITIAL_TITLE, INITIAL_PRICE, accounts[3])
-            .send({
+    it('deny configuring token from non-owner user', async () => {
+        await setBook(10);
+        await purchaseBook(1,accounts[1],10);
+        try {
+            await library.methods.configBorrow(1, 7, 100).send({
                 from: accounts[0],
                 gas: '1000000'
-            })
-        const bookInformation = await bookManager.methods.bookInformations(0).call();
-        assert.equal(bookInformation.bookId, INITIAL_BOOKID);
-        assert.equal(bookInformation.title, INITIAL_TITLE);
-        assert.equal(bookInformation.price, INITIAL_PRICE);
-        assert.equal(bookInformation.authorAddress, accounts[3]);
-
-        const numBook = await bookManager.methods.numBook().call();
-        assert.equal(numBook, 1);
-    })
-
-    it('denys to add new book from non-owner account', async () => {
-        try {
-            await library.methods.addBook(INITIAL_BOOKID, INITIAL_TITLE, INITIAL_PRICE, accounts[3])
-                .send({
-                    from: accounts[0],
-                    gas: '1000000'
-            })
-            assert(false);
-        } catch (err){
-            assert.ok(err);
+            });
+        } catch (err) {
+            assert(true);
+            return;
         }
-    })
-
-    it('allow to modify book inforamtion', async () => {
-        await initialAddBook();
-        await library.methods.inviteStaff(accounts[1]).send({ from: accounts[0], gas: '1000000'});
-        await library.methods.modifyBook(0, INITIAL_BOOKID, 'HELLO',INITIAL_PRICE).send({
-            from: accounts[1],
-            gas: '3000000'
-        });
-        const bookInformation = await bookManager.methods.bookInformations(0).call();
-        assert.equal(bookInformation.title, 'HELLO');
-    })
-
-    it('allow user to create a new Book Token', async () => {
-        await initialAddBook();
-        await initialRegister(accounts[1]);
-        await library.methods.createBookToken(0,INITIAL_PERIOD,INITIAL_COST).send({
-            value: INITIAL_PRICE,
-            from: accounts[1],
-            gas:'1000000'
-        })
-        const token = await tokenManager.methods.bookTokens(0).call();
-        assert.equal(token.owner, accounts[1]);
-        assert.equal(token.reader, accounts[1]);
-        assert.equal(token.allowToContract, false);
-        assert.equal(token.period, INITIAL_PERIOD);
-        assert.equal(token.cost, INITIAL_COST);
-
-
-        const user = await userManager.methods.users(accounts[1]).call();
-        assert.equal(user.numPurchased, 1);
-
-        const { numToken } = await bookManager.methods.bookInformations(0).call();
-        assert.equal(numToken, 1)
-    })
-
-    it('appropreatly process a borrow contract', async () => {
-        await initialAddBook();
-        await initialRegister(accounts[1]);
-        await initialRegister(accounts[2]);
-        await initialCreatingBookToken(accounts[1]);
-        await initialTurnTrueAllowabilityStatus(accounts[1]);
-        
-        await library.methods.borrowBook(0).send({
-            from: accounts[2],
-            value: INITIAL_COST,
-            gas: '1000000'
-        })
-
-        const token = await tokenManager.methods.bookTokens(0).call();
-        assert.equal(token.reader, accounts[2])
-        
-        const user = await userManager.methods.users(accounts[2]).call();
-        assert.equal(user.numBorrowing, 1);
-        assert.equal(user.numBorrowed, 1);
-        
-        const isBorrowing = await userManager.methods.getIsBorrowing(accounts[2],0).call();
-        assert(isBorrowing);
+        assert(false);
     });
 
-    it('appropreatly process a return contract', async () => {
-        await initialAddBook();
-        await initialRegister(accounts[1]);
-        await initialRegister(accounts[2]);
-        await initialCreatingBookToken(accounts[1]);
-        await initialTurnTrueAllowabilityStatus(accounts[1]);
-        await initialBorrowing(accounts[2]);
+    it('can change the allowToContract status from token owner', async () => {
+        await setBook(10);
+        await purchaseBook(1,accounts[1],10);
+        await library.methods.changeBorrowAllowance(1, false).send({
+            from: accounts[1],
+            gas:'1000000'
+        });
+        
+        try{
+            await library.methods.borrowBook(1).send({
+                from: accounts[0],
+                gas:'1000000'
+            });
+        } catch (err) {
+            assert(true);
+            return;
+        }
+        assert(false);
+    })
 
-        await library.methods.returnBook(0).send({
-            from: accounts[2],
+    it('deny changing the allowToContract status from non-tokenowner', async () => {
+        await setBook(10);
+        await purchaseBook(1,accounts[1],10);
+        try {
+            await library.methods.changeBorrowAllowance(1, false).send({
+                from: accounts[0],
+                gas:'1000000'
+            });
+        } catch (err){
+           assert(true);
+           return;
+        }
+        assert(false);
+    })
+
+
+    it('can change the maxBorrowing', async () => {
+        await library.methods.changeMaxBorrowing(10).send({
+            from : accounts[0],
+            gas:'1000000'
+        });
+        const maxNum  = await library.methods.maxBorrowing().call();
+        assert.equal(maxNum, 10);
+    })
+    it('deny changing the maxBorrowing from non-owner user', async () => {
+        try{
+            await library.methods.changeMaxBorrowing(10).send({
+                from : accounts[1],
+                gas:'1000000'
+            });
+        } catch (err) {
+            assert(true);
+            return;
+        }
+        assert(false);
+    })
+})
+
+describe('Adding and Modify Book', async () => {
+    it('can add book by Library owner', async () => {
+        await library.methods.addBook(accounts[1], 0, 'First title').send({
+            from: accounts[0],
+            gas: '1000000'
+        })
+        const numTotalBook = await library.methods.getTotalBook().call();
+        assert.equal(1, numTotalBook);
+    });
+
+    it('deny non-owner account to add book', async() => {
+        try {
+            await library.methods.addBook(accounts[0], 0,'First title').send({
+                from: accounts[1],
+                gas: '1000000'
+            })
+        } catch (err) {
+            assert(true);
+            return;
+        }
+        assert(false);
+    });
+
+    it('can modify book by Library owner', async () => {
+        await setBook(10);
+
+        await library.methods.modifyBook(1, accounts[2], 100,'First title').send({
+            from: accounts[0],
+            gas: '1000000'
+        })
+        const book = await library.methods.getBookData(1).call();
+        assert.equal(accounts[2], book.author);
+        assert.equal(100, book.price)
+    });
+
+    it('deny non-owner account to modify book', async() => {
+        await setBook(10);
+        try {
+            await library.methods.modifyBook(1,accounts[0], 0, 'First title').send({
+                from: accounts[1],
+                gas: '1000000'
+            })
+        } catch (err) {
+            assert(true);
+            return;
+        }
+        assert(false);
+    });
+});
+
+describe('Purchase Book(Token)', async () => {
+    it('can purchase book', async () => {
+        await setBook(10);
+        await library.methods.purchaseBook(1).send({
+            from: accounts[0],
+            value:10,
+            gas:'1000000'
+        })
+        const numTotalToken = await library.methods.totalSupply().call();
+        const tokenOwner = await library.methods.ownerOf(1).call();
+        assert.equal(1, numTotalToken);
+        assert.equal(accounts[0],tokenOwner);
+    });
+
+    it('can purchase book from any user', async() => {
+        await setBook(10);
+        await library.methods.purchaseBook(1).send({
+            from: accounts[1],
+            value:10,
+            gas:'1000000'
+        });
+        const tokenOwner = await library.methods.ownerOf(1).call();
+        assert.equal(accounts[1],tokenOwner);
+    });
+
+    it('require same price as msg.value to purchase book', async () => {
+        await setBook(10);
+        try {
+            await library.methods.purchaseBook(1).send({
+                from: accounts[0],
+                value:100,
+                gas:'1000000'
+            })
+        } catch (err){
+            assert(true);
+            return;
+        }
+        assert(false);
+    });
+
+    it('appropreatly update the user purchase data ', async () => {
+        await setBook(10);
+        await purchaseBook(1,accounts[0],10);
+        const user = await library.methods.getUserData(accounts[0]).call();
+        assert.equal(user.tokenIds, 1);
+    })
+
+    it('appropreatly update the user purchase data several times', async () => {
+        await setBook(10);
+        await setBook(20);
+        await setBook(30);
+        await purchaseBook(1,accounts[0],10);
+        await purchaseBook(1,accounts[1],10);
+        await purchaseBook(3,accounts[0],30);
+        await purchaseBook(2,accounts[0],20);
+        const user = await library.methods.getUserData(accounts[0]).call();
+        assert.equal(user.tokenIds[0], 1);
+        assert.equal(user.tokenIds[1], 3);
+        assert.equal(user.tokenIds[2], 4);
+    })
+})
+
+describe('Borrow Book', async () => {
+    it('can borrow book', async () => {
+        await setBook(10);
+        await purchaseBook(1,accounts[0],10);
+        await library.methods.borrowBook(1).send({
+            from :accounts[1],
+            value: 0,
+            gas: '1000000'
+        });
+        const tokenBorrower = await library.methods.getTokenBorrower(1).call();
+        assert.equal(accounts[1],tokenBorrower);
+    });
+
+    it('can not borrow the book which is borrowed by other user', async () => {
+        await setBook(10);
+        await purchaseBook(1,accounts[0],10);
+        await borrowBook(1,0,accounts[1]);
+        try {
+            await library.methods.borrowBook(1).send({
+                from :accounts[2],
+                value: 0,
+                gas: '1000000'
+            });
+        } catch (err){
+            assert(true);
+            return;
+        }
+        assert(false);
+    });
+
+    it('can not borrow the book which is already borrowed', async () => {
+        await setBook(10);
+        await purchaseBook(1,accounts[0],10);
+        await borrowBook(1,0,accounts[1]);
+        try {
+            await library.methods.borrowBook(1).send({
+                from :accounts[1],
+                value: 0,
+                gas: '1000000'
+            });
+        } catch (err){
+            assert(true);
+            return;
+        }
+        assert(false);
+    });
+
+    it('can borrow book which configured', async () => {
+        await setBook(10);
+        await purchaseBook(1,accounts[0],10);
+        await configBorrow(1,accounts[0],7,100);
+        await library.methods.borrowBook(1).send({
+            from :accounts[2],
+            value: 100,
+            gas: '1000000'
+        });
+        const tokenBorrower = await library.methods.getTokenBorrower(1).call();
+        assert.equal(accounts[2],tokenBorrower);
+
+    })
+
+    it('require borrower to pay cost', async () => {
+        await setBook(10);
+        await purchaseBook(1,accounts[0],10);
+        await configBorrow(1,accounts[0],7,100);
+        try {
+            await library.methods.borrowBook(1).send({
+                from :accounts[2],
+                value: 0,
+                gas: '1000000'
+            });
+        } catch (err){
+            assert(true);
+            return;
+        }
+        assert(false);
+    });
+
+    it('restricted by maxBorrowingNumber', async () =>{
+        await setBook(10);
+
+        await purchaseBook(1,accounts[0],10);
+        await purchaseBook(1,accounts[0],10);
+        await purchaseBook(1,accounts[0],10);
+
+        await borrowBook(1,0,accounts[1]);
+        await borrowBook(2,0,accounts[1]);
+
+        try{
+            await library.methods.borrowBook(3).send({
+                from: accounts[1],
+                value:0,
+                gas:'1000000'
+            })
+        } catch (err) {
+            assert(true);
+            return;
+        }
+        assert(false);
+    });
+
+})
+
+describe('Return Book', async () => {
+    it('can return book', async () => {
+        await setBook(10);
+        await purchaseBook(1,accounts[0],10);
+        await configBorrow(1,accounts[0],7,100);
+        await borrowBook(1,100,accounts[1]);
+
+        let tokenBorrower = await library.methods.getTokenBorrower(1).call();
+        assert.equal(accounts[1],tokenBorrower);
+
+        await library.methods.returnBook(1).send({
+            from: accounts[1],
             gas: '1000000'
         })
 
-        const token = await tokenManager.methods.bookTokens(0).call();
-        assert.equal(token.reader, accounts[1]);
+        tokenBorrower = await library.methods.getTokenBorrower(1).call();
+        assert.equal(tokenBorrower, accounts[0]);
+    });
 
-        const user = await userManager.methods.users(accounts[2]).call();
-        assert.equal(user.numBorrowed, 1);
-        assert.equal(user.numBorrowing, 0);
+    it('deny non-borrower to return book', async () => {
+        await setBook(10);
+        await purchaseBook(1,accounts[0],10);
+        await configBorrow(1,accounts[0],7,100);
+        await borrowBook(1,100,accounts[1]);
 
-        const isBorrowing = await userManager.methods.getIsBorrowing(accounts[2],0).call();
-        assert(!isBorrowing);
-        
-    })
+        try {
+            await library.methods.returnBook(1).send({
+                from: accounts[3],
+                gas: '1000000'
+            })
+        } catch (err) {
+            assert(true);
+            return;
+        }
+        assert(false);
+    });
 
-})
+    it('owner can return book, after a period pass', async () => {
+        await setBook(10);
+        await purchaseBook(1,accounts[0],10);
+        await configBorrow(1,accounts[0],1,100);
+        await borrowBook(1,100,accounts[1]);
 
-describe('BookManager', () => {
-    it('successfuly created by Library constructor', async () => {
-        assert.ok(bookManager.options.address);
-        assert.equal(bookManager.options.address, bookManagerAddress);
-    })
-})
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        await library.methods.returnBook(1).send({
+            from: accounts[0],
+            gas: '1000000'
+        });
+        tokenBorrower = await library.methods.getTokenBorrower(1).call();
+        assert.equal(tokenBorrower, accounts[0]);
+    });
 
-describe('UserManager', () => {
-    it('successfuly created by Library constructor', async () => {
-        assert.ok(userManager.options.address);
-        assert.equal(userManager.options.address, userManagerAddress);
-    })
-})
+    it('deny owner to return book before a period pass', async () => {
+        await setBook(10);
+        await purchaseBook(1,accounts[0],10);
+        await configBorrow(1,accounts[0],10,100);
+        await borrowBook(1,100,accounts[1]);
 
-describe('TokenManager', () => {
-    it('successfuly created by Library constructor', async () => {
-        assert.ok(tokenManager.options.address);
-        assert.equal(tokenManager.options.address, tokenManagerAddress);
+        try{
+            await library.methods.returnBook(1).send({
+                from: accounts[0],
+                gas: '1000000'
+            });
+        } catch (err) {
+            assert(true);
+            return;
+        }
+        assert(false);
     })
 })

@@ -1,7 +1,9 @@
 node_modules
+/ethereum/keys
+/ethereum/old
+/ethereum/compile.js
 
-.next/
+.next
 
-/Remix/
-
-/ethereum/keys/
+/Remix
+>>>>>>> develop

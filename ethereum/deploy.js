@@ -2,8 +2,7 @@ const { PASSPHRASE, PROVIDER } = require('./keys/provider');
 
 const HDWalletProvider = require("@truffle/hdwallet-provider");
 const Web3 = require("web3");
-const compiledLibraryFactory = require('./build/LibraryFactory.json');
-
+const compiledLibrary = require('../build/contracts/Library.json');
 const provider = new HDWalletProvider({
     mnemonic: {
       phrase: PASSPHRASE
@@ -16,11 +15,11 @@ const deploy = async () => {
     const accounts = await web3.eth.getAccounts();
     console.log(`Attempting to deploy from account ${accounts[0]}`);
 
-    const result = await new web3.eth.Contract(compiledLibraryFactory.abi)
-        .deploy({ data: compiledLibraryFactory.evm.bytecode.object })
+    const result = await new web3.eth.Contract(compiledLibrary.abi)
+        .deploy({ data: compiledLibrary.bytecode, arguments: [3]})
         .send(({
             from: accounts[0],
-            gas: '6000000'
+            gas: '5000000'
         }))
     
     console.log(`Contract deployed to ${result.options.address}`);

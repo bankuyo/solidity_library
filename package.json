@@ -10,6 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@openzeppelin/contracts": "^4.4.1",
     "@truffle/hdwallet-provider": "^2.0.0",
     "fs-extra": "^10.0.0",
     "ganache-cli": "^6.12.2",
@@ -19,7 +20,8 @@
     "react-dom": "^17.0.2",
     "semantic-ui-css": "^2.4.1",
     "semantic-ui-react": "^2.0.4",
-    "solc": "^0.8.10",
+    "solc": "^0.8.11",
+    "truffle": "^5.4.26",
     "web3": "^1.6.1"
   }
 }
