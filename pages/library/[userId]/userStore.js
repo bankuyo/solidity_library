@@ -2,9 +2,9 @@ import React from 'react';
 import "semantic-ui-css/semantic.min.css";
 import {Card, Form, Button, Message} from 'semantic-ui-react';
 
-import Layout from '../../components/Layout';
-import library from '../../ethereum/Library';
-import web3 from '../../ethereum/web3';
+import Layout from '../../../components/Layout';
+import library from '../../../ethereum/Library';
+import web3 from '../../../ethereum/web3';
 
 class Library extends React.Component {
     state = {
@@ -32,12 +32,13 @@ class Library extends React.Component {
     renderCard(){
         const tokenCards = this.props.tokens.map((token,index) => {
             return ({
+                key: index,
                 header: token.title,
                 meta: `You must return book at ${token.period} days after`,
                 description: (
                     <div>
                         <p>{`Borrwoing cost: ${token.cost} wei`}</p>
-                        <Form error={!!this.state.errorMessages[index]}>
+                        <Form  error={!!this.state.errorMessages[index]}>
                             <Button 
                                 primary 
                                 onClick={()=> this.onClickBorrow(index, token.tokenId, token.cost)} 

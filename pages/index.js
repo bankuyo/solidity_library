@@ -22,10 +22,11 @@ class LandingPage extends React.Component {
     }
 
     renderCard(){
-        const purchaserCards = this.props.purchasers.map((purchaser) => {
+        const purchaserCards = this.props.purchasers.map((purchaser,index) => {
             return ({
+                key: index,
                 header: (
-                    <Link href={`/${purchaser.purchaserAddress}/library`}>
+                    <Link href={`/library/${purchaser.purchaserAddress}/userStore`}>
                         <a style={{fontSize:'20px', color: 'inherit'}}>{purchaser.purchaserAddress}</a>
                     </Link>),
                 meta: 'overview',
@@ -41,7 +42,6 @@ class LandingPage extends React.Component {
     }
 
     render() {
-        console.log(this.props.purchasers);
         return(
             <Layout>
                 <h2>Landing Page</h2>

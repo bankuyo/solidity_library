@@ -20,9 +20,10 @@ class ModifyToken extends React.Component {
         const tokenId = query.tokenId;
         const token = await library.methods.getTokenData(tokenId).call();
         const book = await library.methods.getBookData(token[1]).call();
+        const owner = await library.methods.ownerOf(tokenId).call();
         return ({
             title:book[2], period: token[3], cost: token[4], 
-            allowToContract: token[2], tokenId
+            allowToContract: token[2], tokenId, owner
         });
     }
 
@@ -35,7 +36,7 @@ class ModifyToken extends React.Component {
             await library.methods.configBorrow(this.props.tokenId, this.state.period, this.state.cost).send({
                 from: accounts[0]
             })
-            Router.push('/');
+            Router.push(`/user/${this.props.owner}/overview`);
 
         } catch (err){
             this.setState({errorMessage: err.message})
@@ -74,6 +75,7 @@ class ModifyToken extends React.Component {
 
 
     render(){
+        console.log(this.props.owner)
         return(
             <Layout>
                 <h2>Modify Token</h2>

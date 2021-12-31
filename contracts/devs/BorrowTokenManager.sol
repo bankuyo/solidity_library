@@ -29,6 +29,7 @@ contract BorrowTokenManager {
         require(_token.allowToContract);
     }
 
+    // Develop version
     function _returnRequirement(BorrowToken memory _token, address _tokenOwner, address _sender) internal virtual {
         if(block.timestamp >= _token.start + _token.period * 1 seconds){
             require(_token.borrower == _sender || _tokenOwner == _sender);

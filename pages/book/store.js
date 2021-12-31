@@ -2,6 +2,7 @@ import React from 'react';
 import library from '../../ethereum/Library';
 import {Card, Button, Table, Message, Form} from 'semantic-ui-react';
 import 'semantic-ui-css/semantic.min.css';
+import Router from 'next/router';
 
 import Layout from '../../components/Layout';
 import web3 from '../../ethereum/web3';
@@ -88,7 +89,7 @@ class BookStore extends React.Component{
                 from: accounts[0],
                 value: payment
             });
-
+            Router.reload();
         } catch (err){
             this.setError(bookId-1, err.message);
         }
